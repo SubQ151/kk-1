@@ -34,12 +34,13 @@ HEADERS  += \
     src/adduserwindow.h \
     src/audiomodel.h \
     src/calibrator.h \
-    src/fftw3.h
 
+win32:HEADERS+=src/fftw3.h
 FORMS += \
     src/mainwindow.ui \
     src/userwindow.ui \
     src/adduserwindow.ui
+    win32:DEFINES +=fftw3.dll
 
     DESTDIR = $$(PWD)
     message(The project will be installed in $$DESTDIR)
