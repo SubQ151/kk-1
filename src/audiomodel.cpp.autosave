@@ -163,8 +163,6 @@ double AudioModel::computeLevel(QVector<std::complex<double>> x, double calibrat
     double p = power(x, calibrationOffset);
     double f = 48000.0;
     double R_A = 12194*12194*pow(f, 4.0) / ((f*f + 20.6*20.6) * sqrt((f*f + 107.7*107.7)*(f*f + 737.9*737.9)) * (f*f + 12194*12194));
-    qDebug()<<R_A;
     double A = 20*log10(R_A) + 2.0;
-    qDebug()<<A;
     return log10(p / referencePower) + A;
 }

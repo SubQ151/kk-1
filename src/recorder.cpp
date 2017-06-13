@@ -1,7 +1,7 @@
 #include "recorder.h"
 #include <QDir>
 #include <QAudioFormat>
-#include <QDebug>
+#include <QDataStream>
 
 using std::logic_error;
 
@@ -78,11 +78,13 @@ void Recorder::Start()
 //		throw;
 //		return;
 //	}
-    buffer.open(QIODevice::ReadWrite);
-    audio->start(&buffer);
+    //buffer.buffer().clear(); // Flush data from underlying QByteArray internal buffer.
+    //buffer.open(QIODevice::ReadWrite);
+    //audio->start(&buffer);
 
 	// Record 5 seconds.
-	timer.start();
+    //timer.start();
+    Stop();
 }
 
 void Recorder::openFile(const QString &fileName)
@@ -112,13 +114,13 @@ void Recorder::openFile(const QString &fileName)
 
 void Recorder::Stop()
 {
-	timer.stop(); // Stop a timer in case user aborts recording.
-	audio->stop();
-    buffer.close();
-    // TODO: get data from buffer and analyze it.
+    //timer.stop(); // Stop a timer in case user aborts recording.
+    //audio->stop();
+    //buffer.close();
 
-    emit recordingStopped(buffer.data().size());
-    buffer.buffer().clear(); // Flush data from underlying QByteArray internal buffer.
+    // parseBufferContent(buffer.data());
+    loadAudioDataFromFile("debug/kalibracja.wav");
+	emit recordingStopped(complexData);
 }
 
 void Recorder::closeFile()
@@ -145,4 +147,30 @@ QStringList Recorder::GetAvailableDevices() const
 		devicesNames.append(device.deviceName());
     }
 	return devicesNames;
+}
+
+void Recorder::parseBufferContent(const QByteArray &data)
+{
+	complexData.clear();
+	QDataStream stream(data);
+	while (!stream.atEnd())
+	{
+        short i;
+		stream >> i;
+		complexData.push_back(std::complex<double>((double)i, 0.0));
+    }
+}
+
+void Recorder::loadAudioDataFromFile(const QString &fileName)
+{
+    QFile file(fileName);
+    file.open(QFile::ReadOnly);
+    QDataStream fstream(&file);
+    while (!fstream.atEnd())
+    {
+        short i;
+        fstream >> i;
+        complexData.push_back(std::complex<double>((double)i, 0.0));
+    }
+    file.close();
 }
