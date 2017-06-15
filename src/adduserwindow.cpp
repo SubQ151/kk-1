@@ -38,7 +38,7 @@ AddUserWindow::AddUserWindow(QWidget *parent,QString FirstName, QString SurName,
 }
 /**
  * @brief Przycisk "Akceptuj" powodujący zatwierdzenie zmian i dodanie bądź edycję uczestnika konkursu.
- * @warning Jeśli któreś z pól tekstowych, wyświetlany jest adekwatny błąd.
+ * @warning Jeśli któreś z pól tekstowych jest puste, wyświetlany jest adekwatny błąd.
  * @author Marcin Anuszkiewicz Sebastian Zyśk
  */
 void AddUserWindow::accept()

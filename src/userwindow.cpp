@@ -38,7 +38,7 @@ UserWindow::~UserWindow()
 
 /**
  * @brief Metoda określająca wielkości kolumn.
- * @event Zdarzenie.
+ * @param event Zdarzenie.
  * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
  */
 void UserWindow::resizeEvent(QResizeEvent *event)

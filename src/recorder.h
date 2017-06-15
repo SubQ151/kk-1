@@ -43,6 +43,10 @@ public slots:
 	void Stop();
 	void InitialiseRecorder(const QString &deviceName = "");
 signals:
+        /**
+         * @brief Sygnał kończący nagrywanie.
+         * @authors Kamil Wasilewski
+         */
 	void recordingStopped(const QVector<std::complex<double> > &complexData);
 };
 

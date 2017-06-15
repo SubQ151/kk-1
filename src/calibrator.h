@@ -19,6 +19,10 @@ public:
 
     static double calibrationData;
 signals:
+    /**
+     * @brief Sygnał kończący kalibrację.
+     * @authors Pavel Mukha
+     */
 	void calibrationStopped();
 
 public slots:

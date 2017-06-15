@@ -19,8 +19,24 @@ public:
     explicit AddUserWindow(QWidget *parent = 0);
     AddUserWindow(QWidget *parent,QString FirstName, QString SurName, gender g);
     void accept() override;
+
+    /**
+     * @brief Getter zwracający imię uczestnika konkursu.
+     * @returns name Imie
+     * @authors Marcin Anuszkiewicz Sebastian Zyśk
+     */
     QString GetName() {return name;}
+    /**
+     * @brief Getter zwracający nazwisko uczestnika konkursu.
+     * @returns surname Nazwisko
+     * @authors Marcin Anuszkiewicz Sebastian Zyśk
+     */
     QString GetSurName() {return surname;}
+    /**
+     * @brief Getter zwracający płeć uczestnika konkursu.
+     * @returns g Płeć.
+     * @authors Marcin Anuszkiewicz Sebastian Zyśk
+     */
     gender GetGender() {return g;}
     ~AddUserWindow();
 
