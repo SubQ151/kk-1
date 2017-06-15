@@ -3,7 +3,12 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include "audiomodel.h"
-#include <QStatusBar>
+/**
+ * @brief Konstruktor. Tworzy okno wraz ze wszystkimi przyciskami dla osoby przeprowadzającej konkurs krzykaczy.
+ * @param uw Okno z rankingiem uczestników konkursu.
+ * @param parent Okno nadrzędne.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 MainWindow::MainWindow(UserWindow *uw, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -25,15 +30,21 @@ MainWindow::MainWindow(UserWindow *uw, QWidget *parent) :
     ui->AdminUserList->setHorizontalHeaderLabels(Header);
     ui->AdminUserList->horizontalHeader()->setStretchLastSection(true); // Resize last column to fit QTableWidget edge.
     ui->AllRadioButton->setChecked(true);
-
 }
-
+/**
+ * @brief Destruktor. Niszczy okno administratora.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk
+ */
 MainWindow::~MainWindow()
 {
 	delete ui;
 	delete calibrator;
 }
-
+/**
+ * @brief Metoda wywołująca okno po zamknięciu programu. Umożliwia użytkownikowi powrót do programu bądź zapis listy użytkowników do pliku CSV.
+ * @param event zdarzenie kliknięcia przycisku "Zakończ"
+ * @authors Dariusz Jóźko
+ */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 	QMessageBox::StandardButton resBtn = QMessageBox::question(this, tr("Zamykanie programu"), tr("Czy chcesz eksportować listę do pliku przed zamknięciem?"), QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes);
@@ -53,7 +64,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 		userWindow->close();
 	}
 }
-
+/**
+ * @brief Metoda odpowiadająca za przycisk "Nagrywaj". Uruchamia proces pobierania danych z urządzenia wejścia i przetwarzania go na głośność krzyku wyrażaną w decybelach.
+ * @warning Może zostać wyłącznie wywołana, gdy wybrany jest jeden z uczestników, w przeciwnym wypadku wyświetli adekwatny błąd.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::proceed()
 {
     int rowindex = ui->AdminUserList->selectionModel()->currentIndex().row();
@@ -96,10 +111,15 @@ void MainWindow::proceed()
 		return;
 	}
 }
-
+/**
+ * @brief Metoda wywołana po 5 sekundach od rozpoczęcia nagrywania. Przypisuje wynik do aktualnie wybranego użytkownika i wyświetla użytkownika wraz z wynikiem na oknie przeznaczonym dla publiczności.\
+ * @param complexData Dane pobrane podczas nagrywania z urządzenia wejścia
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::onRecordingStopped(const QVector<std::complex<double> > &complexData)
 {
-    double result = AudioModel::computeLevel(complexData, Calibrator::calibrationData, 50.0);
+    qDebug() << Calibrator::calibrationData;
+    double result = AudioModel::computeLevel(complexData, Calibrator::calibrationData);
 
 	User::setShoutScore(currentUser, result);
 	userWindow->InsertUserToRanking(User::GetUser(currentUser), currentUser);
@@ -108,15 +128,22 @@ void MainWindow::onRecordingStopped(const QVector<std::complex<double> > &comple
 	ui->deviceComboBox->setEnabled(true);
 	recordOnRun = false;
 	disconnect(&recorder, 0, this, 0); // Prevent mainWindow from receiving signals from recorder.
-    statusBar()->showMessage("Kalibracja się powiodła",5000);
 }
-
+/**
+ * @brief Metoda kończąca kalibrację. Udostępnia możliwość kliknięcia przycisku "Nagrywaj" bądź wybrania urządzenia wejścia.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::onCalibrationStopped()
 {
 	ui->deviceComboBox->setEnabled(true);
 	ui->recordButton->setEnabled(true);
 }
-
+/**
+ * @brief Metoda odpowiedzialna za możliwość wyboru urządzenia wejścia.
+ * @warning Wybór nie jest możliwy gdy trwa nagrywanie lub kalibracja.
+ * @warning Gdy nie zostanie wykryte żadne urządzenie wejścia, zostanie wyświetlony adekwatny błąd.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::initialiseDeviceList()
 {
     auto devices = recorder.GetAvailableDevices();
@@ -132,7 +159,11 @@ void MainWindow::initialiseDeviceList()
         ui->deviceComboBox->addItems(devices);
     }
 }
-
+/**
+ * @brief Metoda odpowiedzialna za dodanie nowego uczestnika konkursu do listy uczestników w oknie prowadzącego konkurs.
+ * @param user Nowy użytkownik.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::insertUserToList(User * const user)
 {
     int row = ui->AdminUserList->rowCount() - 1;
@@ -148,7 +179,10 @@ void MainWindow::insertUserToList(User * const user)
     checkBoxCell->setCheckState(Qt::Unchecked);
 	ui->AdminUserList->setItem(row, 4, checkBoxCell);
 }
-
+/**
+ * @brief Metoda odpowiedzialna za działanie przycisku "Dodaj użytkownika". Uruchamia nowe okno pozwalające wpisać dane uczestnika, a następnie dodaje go do rankingu w oknie dla publiczności.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski Dariusz Jóźko
+ */
 void MainWindow::on_AddUserButton_clicked()
 {
    auw = new AddUserWindow(this);
@@ -160,7 +194,11 @@ void MainWindow::on_AddUserButton_clicked()
    }
    delete auw;
 }
-
+/**
+ * @brief Metoda odpowiedzialna za działanie przycisku "Edytuj użytkownika". Uruchamia nowe okno pozwalające edytować dane wybranego użytkownika uczestnika, a następnie aktualizuje dane uczestnika w oknie dla publiczności.
+ * @warning Gdy żaden użytkownik nie zostanie wybrany przed kliknięciem przycisku, wyświetlony zostanie adekwatny błąd.
+ * @authors Marcin Anuszkiewcz Sebastian Zyśk Kamil Wasilewski Dariusz Jóźko
+ */
 void MainWindow::on_EditUserButton_clicked()
 {
     QString Name;
@@ -196,7 +234,10 @@ void MainWindow::on_EditUserButton_clicked()
     }
     delete auw;
 }
-
+/**
+ * @brief Metoda odpowiedzialna za działanie przycisku "Eksportuj do listy". Uruchamia nowe okno pozwalające wybrać ścieżkę dla pliku CSV, do którego zostanie zapisana lista uczestników.
+ * @authors Jarosław Boguta
+ */
 void MainWindow::on_actionExportToCsv_triggered()
 {
 	QString filename = QFileDialog::getSaveFileName(
@@ -205,7 +246,11 @@ void MainWindow::on_actionExportToCsv_triggered()
 		return;
 	User::exportToCSV(filename);
 }
-
+/**
+ * @brief Metoda odpowiedzialna za działanie przycisku "Importuj z listy". Uruchamia nowe okno pozwalające wybrać ścieżkę dla pliku CSV, z którego zostanie załadowana lista uczestników.
+ * @warning Możliwa jest utrata danych jeśli importowanie z pliku odbędzie się, gdy istnieją użytkownicy w liście.
+ * @authors Jarosław Boguta
+ */
 void MainWindow::on_actionImportFromCsv_triggered()
 {
     QMessageBox::StandardButton reply;
@@ -244,6 +289,11 @@ void MainWindow::on_actionImportFromCsv_triggered()
     }
 }
 
+/**
+ * @brief Metoda odpowiedzialna za wyświetlanie wyłącznie mężczyzn w oknie przeznaczonym dla publiczności.
+ * @param checked Zmienna logiczna umożliwiająca kontrolę wyświetlania.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void MainWindow::on_MenRadioButton_toggled(bool checked)
 {
 	if (checked == false)
@@ -253,6 +303,11 @@ void MainWindow::on_MenRadioButton_toggled(bool checked)
     userWindow->HideWomen();
 }
 
+/**
+ * @brief Metoda odpowiedzialna za wyświetlanie wyłącznie kobiet w oknie przeznaczonym dla publiczności.
+ * @param checked Zmienna logiczna umożliwiająca kontrolę wyświetlania.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void MainWindow::on_WomenRadioButton_toggled(bool checked)
 {
 	if (checked == false)
@@ -262,6 +317,11 @@ void MainWindow::on_WomenRadioButton_toggled(bool checked)
     userWindow->HideMen();
 }
 
+/**
+ * @brief Metoda odpowiedzialna za wyświetlanie kobiet i mężczyzn w oknie przeznaczonym dla publiczności.
+ * @param checked Zmienna logiczna umożliwiająca kontrolę wyświetlania.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void MainWindow::on_AllRadioButton_toggled(bool checked)
 {
 	if (checked == false)
@@ -270,6 +330,11 @@ void MainWindow::on_AllRadioButton_toggled(bool checked)
     userWindow->SetShowing(a);
 }
 
+/**
+ * @brief Metoda odpowiedzialna za uruchomienie procesu kalibracji.
+ * @warning Dane kalibracyjne i wszelkie wyniki od nich zależące mogą być błędne, jeśli wybrane urządzenie wejścia nie odbiera sygnału kalibracyjnego.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::on_actionCalibrate_triggered()
 {
 	QMessageBox::StandardButton reply;
@@ -284,8 +349,19 @@ void MainWindow::on_actionCalibrate_triggered()
 	ui->deviceComboBox->setEnabled(false);
 	ui->recordButton->setEnabled(false);
 }
-
+/**
+ * @brief Metoda odpowiedzialna za zamknięcie wszystkich okien po kliknięciu przycisku "Zakończ".
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Kamil Wasilewski
+ */
 void MainWindow::on_actionClose_triggered()
 {
 	QApplication::closeAllWindows();
+}
+/**
+ * @brief Metoda odpowiedzialna za uruchomienie procesu kalibracji z pliku.
+ * @author Kamil Wasilewski
+ */
+void MainWindow::on_actionCalibrateFromFile_triggered()
+{
+    calibrator->CalibrateFromFile("kalibracja.wav");
 }

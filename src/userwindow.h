@@ -9,7 +9,10 @@ enum showing {m,w,a};
 namespace Ui {
 class UserWindow;
 }
-
+/**
+ * @brief Klasa określająca okno wyświetlane dla publiczności podczas konkursu krzykaczy. Uruchamia się wraz z mainwindow. Zawiera listę uczestników konkursu wraz z ich wynikami.
+ * @authors Sebastian Zyśk Marcin Anuszkiewicz
+ */
 class UserWindow : public QMainWindow
 {
     Q_OBJECT

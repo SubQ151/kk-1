@@ -3,7 +3,11 @@
 #include <QDesktopWidget>
 #include <QHeaderView>
 #include <QTableWidget>
-
+/**
+ * @brief Konstruktor. Tworzy okno dostępne dla publiczności.
+ * @param parent Okno nadrzędne.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
+ */
 UserWindow::UserWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::UserWindow)
@@ -23,12 +27,20 @@ UserWindow::UserWindow(QWidget *parent) :
     ui->UserList->setHorizontalHeaderLabels(Header);
     Showing = a;
 }
-
+/**
+ * @brief Destruktor. Niszczy okno dostępne dla publiczności.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
+ */
 UserWindow::~UserWindow()
 {
     delete ui;
 }
 
+/**
+ * @brief Metoda określająca wielkości kolumn.
+ * @event Zdarzenie.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
+ */
 void UserWindow::resizeEvent(QResizeEvent *event)
 {
     ui->UserList->setColumnWidth(0, this->width() * 0.4);
@@ -38,6 +50,12 @@ void UserWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
 }
 
+/**
+ * @brief Metoda dodająca użytkownika do rankingu.
+ * @param user Uczestnik konkursu.
+ * @param ID ID uczestnika konkursu.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
+ */
 void UserWindow::InsertUserToRanking(User *user, int ID)
 {
      for(int i=0;i<ui->UserList->rowCount();i++)
@@ -87,17 +105,30 @@ void UserWindow::InsertUserToRanking(User *user, int ID)
      }
 }
 
+/**
+ * @brief Metoda czyszcząca zawartość rankingu.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
+ */
 void UserWindow::ClearRanking()
 {
     ui->UserList->clearContents();
     ui->UserList->setRowCount(0);
 }
 
+/**
+ * @brief Metoda umożliwiająca kontrolę wyświetlania uczestników według płci przy pomocy zmiennej Showing.
+ * @param Showing Zmienna kontrolna.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void UserWindow::SetShowing(showing Showing)
 {
     this->Showing=Showing;
 }
 
+/**
+ * @brief Metoda ukrywająca wszystkich mężczyzn w rankingu.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void UserWindow::HideMen()
 {
     for(int i=0;i<ui->UserList->rowCount();i++)
@@ -108,6 +139,11 @@ void UserWindow::HideMen()
         }
     }
 }
+
+/**
+ * @brief Metoda ukrywająca wszystkie kobiety w rankingu.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void UserWindow::HideWomen()
 {
     for(int i=0;i<ui->UserList->rowCount();i++)
@@ -118,6 +154,10 @@ void UserWindow::HideWomen()
         }
     }
 }
+/**
+ * @brief Metoda wyświetlająca wszystkich uczestników konkursu w rankingu.
+ * @authors Sebastian Zyśk Dariusz Jóźko
+ */
 void UserWindow::ShowAll()
 {
     for(int i=0;i<ui->UserList->rowCount();i++)

@@ -7,7 +7,10 @@
 namespace Ui {
 class AddUserWindow;
 }
-
+/**
+ * @brief Klasa odpowiadająca za okno dodania lub edycji uczestnika konkursu.
+ * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko
+ */
 class AddUserWindow : public QDialog
 {
     Q_OBJECT

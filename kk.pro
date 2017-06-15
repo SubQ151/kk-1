@@ -10,11 +10,19 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = kk
 TEMPLATE = app
+QMAKE_CXXFLAGS += -std=c++11 # for MinGW
 
-QMAKE_CXXFLAGS += -std=c++11
-    INCLUDEPATH += "src"
-    LIBS ''= -lfftw3
-    LIBS += -L$$PWD/src -lfftw3
+linux-g++ {
+	CONFIG += link_pkgconfig
+	PKGCONFIG += fftw3
+}
+
+DESTDIR = $$PWD
+win32 {
+	LIBS += -L$$DESTDIR\lib -llibfftw3-3
+	INCLUDEPATH = $$DESTDIR\lib
+}
+
 SOURCES += src/main.cpp \
     src/recorder.cpp \
     src/mainwindow.cpp \
@@ -22,7 +30,7 @@ SOURCES += src/main.cpp \
     src/user.cpp \
     src/userwindow.cpp \
     src/adduserwindow.cpp \
-	  src/calibrator.cpp \
+	src/calibrator.cpp \
     src/audiomodel.cpp
 
 HEADERS  += \
@@ -33,14 +41,10 @@ HEADERS  += \
     src/userwindow.h \
     src/adduserwindow.h \
     src/audiomodel.h \
-    src/calibrator.h \
+    src/calibrator.h
 
-win32:HEADERS+=src/fftw3.h
+
 FORMS += \
     src/mainwindow.ui \
     src/userwindow.ui \
     src/adduserwindow.ui
-    win32:DEFINES +=fftw3.dll
-
-    DESTDIR = $$(PWD)
-    message(The project will be installed in $$DESTDIR)

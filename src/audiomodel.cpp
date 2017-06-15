@@ -3,7 +3,7 @@
 #include <functional>
 #include <cstdlib>
 #include <fftw3.h>
-#include<QDebug>
+
 #include "audiomodel.h"
 
 const complex<double> AudioModel::ZERO = complex<double>(0, 0);
@@ -13,10 +13,11 @@ AudioModel::AudioModel(QObject *parent) : QObject(parent)
 }
 
 /**
- *  Returns the FFT of the specified complex array.
+ *  @brief Metoda korzystająca z szybkiej transformaty Fourier'a, która zwraca FFT tablicy liczb zespolonych.
  *
- *  @param  x the complex array
- *  @return the FFT of the complex array <tt>x</tt>
+ *  @param  x tablica liczb zespolonych
+ *  @return Zwraca FFT tablicy liczb zespolonych <tt>x</tt>
+ * @authors Adrian Borucki Magdalena Buczyńska Adrianna Łuczak Kamil Wasilewski
  */
 QVector<complex<double>> AudioModel::fft(QVector<complex<double> > x)
 {
@@ -132,12 +133,21 @@ QVector<complex<double>> AudioModel::cconvolve(QVector<std::complex<double> > x,
     // compute inverse FFT
     return ifft(c);
 }
-
+/**
+ *  @brief Metoda obliczająca charakterystykę mikrofonu i głośność w decybelach orginalnego sygnału z urządzenia wejścia przy pomocy twierdzenia Parsevala.
+ *
+ *  @param x Orginalny sygnał z urządzenia wejścia
+ *  @param calibrationOffset
+ *  @param referencePower Głośność w decybelach punktu odniesienia (kalibracji).
+ *  @return Głośność w decybelach obliczona przy pomocy twierdzenia Parsevala.
+ *  @authors Adrian Borucki Magdalena Buczyńska Adrianna Łuczak Kamil Wasilewski
+ */
 double AudioModel::power(QVector<std::complex<double>> x, double calibrationOffset)
 {
     int original_length = x.length();
     auto xfft = fft(x);
     transform(xfft.begin(), xfft.end(), xfft.begin(), [=](complex<double> z){ return z + calibrationOffset; });
+    //transform(xfft.begin(), xfft.end(), xfft.begin(), [=](complex<double> z){ return 20*log10(z.real()) + calibrationOffset; });
 
     double result = 0;
     double fraction;
@@ -150,21 +160,20 @@ double AudioModel::power(QVector<std::complex<double>> x, double calibrationOffs
 }
 
 /**
- *  This method calculates the signal volume from the FFT.
+ *  @brief Metoda obliczająca charakterystykę mikrofonu i głośność w decybelach orginalnego sygnału z urządzenia wejścia przy pomocy twierdzenia Parsevala.
  *
- *  @param x The original signal,
+ *  @param x Orginalny sygnał z urządzenia wejścia
  *  @param calibrationOffset
- *  @param referencePower
+ *  @param referencePower Głośność w decybelach punktu odniesienia (kalibracji).
  *
- *  @return The volume of signal calculation by Parseval's theorem.
+ *  @return Głośność w decybelach obliczona przy pomocy twierdzenia Parsevala.
+ *  @authors Adrian Borucki Magdalena Buczyńska Adrianna Łuczak Kamil Wasilewski
  */
-double AudioModel::computeLevel(QVector<std::complex<double>> x, double calibrationOffset, double referencePower )
+double AudioModel::computeLevel(QVector<std::complex<double>> x, double calibrationOffset, double referencePower)
 {
     double p = power(x, calibrationOffset);
     double f = 48000.0;
     double R_A = 12194*12194*pow(f, 4.0) / ((f*f + 20.6*20.6) * sqrt((f*f + 107.7*107.7)*(f*f + 737.9*737.9)) * (f*f + 12194*12194));
-    qDebug()<<R_A;
     double A = 20*log10(R_A) + 2.0;
-    qDebug()<<A;
     return log10(p / referencePower) + A;
 }

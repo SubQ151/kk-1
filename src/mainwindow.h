@@ -12,7 +12,10 @@
 namespace Ui {
 class MainWindow;
 }
-
+/**
+ * @brief Klasa odpowiedzialna za okno dla osoby przeprowadzającej konkurs. W niej znajdują się wszystkie wywołania funkcjonalności programu.
+ * @authors Jarosław Boguta Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -35,6 +38,8 @@ private slots:
 	void on_actionImportFromCsv_triggered();
 	void on_actionCalibrate_triggered();
 	void on_actionClose_triggered();
+
+    void on_actionCalibrateFromFile_triggered();
 
 private:
     Ui::MainWindow *ui;

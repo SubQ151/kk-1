@@ -4,7 +4,10 @@
 #include <QObject>
 #include <QVector>
 #include "recorder.h"
-
+/**
+ * @brief Klasa odpowiadająca za proces kalibracji programu.
+ * @authors Pavel Mukha Kamil Wasilewski
+ */
 class Calibrator : public QObject
 {
     Q_OBJECT
@@ -12,6 +15,7 @@ class Calibrator : public QObject
 public:
 	explicit Calibrator(Recorder *recorder, QObject *parent = nullptr);
 	void Calibrate();
+    void CalibrateFromFile(const QString &fileName);
 
     static double calibrationData;
 signals:

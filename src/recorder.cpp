@@ -2,22 +2,34 @@
 #include <QDir>
 #include <QAudioFormat>
 #include <QDataStream>
+#include <limits>
 
 using std::logic_error;
-
+/**
+ * @brief Konstruktor bezparametrowy. Inicjalizuje recorder.
+ * @authors Kamil Wasilewski
+ */
 Recorder::Recorder()
 {
     audio = nullptr;
 	InitialiseRecorder();
 	setupTimer();
 }
-
+/**
+ * @brief Destruktor.
+ * @authors Kamil Wasilewski
+ */
 Recorder::~Recorder()
 {
     if (audio != nullptr)
         delete audio;
 }
-
+/**
+ * @brief Metoda przypisująca zmiennej device parametry wybranego urządzenia wejścia.
+ * @param deviceName Nazwa urządzenia wejścia
+ * @warning Jeśli format wybranego urządzenia nie jest obsługiwany, wybrany zostanie format najlepszego dopasowania.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::InitialiseRecorder(const QString &deviceName)
 {
 	// destroy old QAudioInput object (if exist)
@@ -48,14 +60,20 @@ void Recorder::InitialiseRecorder(const QString &deviceName)
 	printFormat();
     audio = new QAudioInput(device, format);
 }
-
+/**
+ * @brief Metoda inicjalizująca timer, trwający 5 sekund.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::setupTimer()
 {
 	timer.setSingleShot(true);
 	timer.setInterval(5000);
 	connect(&timer, SIGNAL(timeout()), this, SLOT(Stop()));
 }
-
+/**
+ * @brief Metoda ustawiająca format próbek.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::setFormatSettings()
 {
 	format.setChannelCount(1);
@@ -65,7 +83,10 @@ void Recorder::setFormatSettings()
     format.setByteOrder(QAudioFormat::LittleEndian);
 	format.setSampleType(QAudioFormat::SignedInt);
 }
-
+/**
+ * @brief Metoda rozpoczynająca proces pobierania dźwięków z urządzenia wejścia do bufora.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::Start()
 {
     // to be deleted in final release:
@@ -78,15 +99,19 @@ void Recorder::Start()
 //		throw;
 //		return;
 //	}
-    //buffer.buffer().clear(); // Flush data from underlying QByteArray internal buffer.
-    //buffer.open(QIODevice::ReadWrite);
-    //audio->start(&buffer);
+    buffer.buffer().clear(); // Flush data from underlying QByteArray internal buffer.
+    buffer.open(QIODevice::ReadWrite);
+    audio->start(&buffer);
 
 	// Record 5 seconds.
-    //timer.start();
-    Stop();
+    timer.start();
 }
-
+/**
+ * @brief Metoda wczytująca ustawienia z pliku konfiguracyjnego.
+ * @param fileName Nazwa pliku konfiguracyjnego.
+ * @warning Jeżeli plik jest tylko do odczytu lub istnieje już katalog o takiej samej nazwie, wyświetlony zostanie błąd.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::openFile(const QString &fileName)
 {
 	// Check whether some directory with the same name already exist.
@@ -111,23 +136,31 @@ void Recorder::openFile(const QString &fileName)
 		return;
 	}
 }
-
+/**
+ * @brief Metoda kończąca przechwytywanie danych do buforu.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::Stop()
 {
-    //timer.stop(); // Stop a timer in case user aborts recording.
-    //audio->stop();
-    //buffer.close();
+    timer.stop(); // Stop a timer in case user aborts recording.
+    audio->stop();
+    buffer.close();
 
-    // parseBufferContent(buffer.data());
-    loadAudioDataFromFile("debug/kalibracja.wav");
+    parseBufferContent(buffer.data());
 	emit recordingStopped(complexData);
 }
-
+/**
+ * @brief Metoda zamykająca plik konfiguracyjny.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::closeFile()
 {
     file.close();
 }
-
+/**
+ * @brief Metoda wyświetlająca format pobieranych danych.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::printFormat() const
 {
 	qDebug() << "Channel count: " << format.channelCount();
@@ -137,7 +170,11 @@ void Recorder::printFormat() const
 	qDebug() << "Sample rate: " << format.sampleRate();
     qDebug() << "";
 }
-
+/**
+ * @brief Metoda zwracająca listę dostępnych urządzeń wejścia.
+ * @return devicesNames lista nazw dostępnych urządzeń wejścia.
+ * @authors Kamil Wasilewski
+ */
 QStringList Recorder::GetAvailableDevices() const
 {
     auto devices = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
@@ -148,7 +185,10 @@ QStringList Recorder::GetAvailableDevices() const
     }
 	return devicesNames;
 }
-
+/**
+ * @brief Metoda parsująca dane zawarte w buforze.
+ * @authors Kamil Wasilewski
+ */
 void Recorder::parseBufferContent(const QByteArray &data)
 {
 	complexData.clear();
@@ -160,9 +200,14 @@ void Recorder::parseBufferContent(const QByteArray &data)
 		complexData.push_back(std::complex<double>((double)i, 0.0));
     }
 }
-
-void Recorder::loadAudioDataFromFile(const QString &fileName)
+/**
+ * @brief Metoda wczytująca dane Audio z pliku.
+ * @param fileName Nazwa pliku.
+ * @authors Kamil Wasilewski
+ */
+void Recorder::LoadAudioDataFromFile(const QString &fileName)
 {
+    complexData.clear();
     QFile file(fileName);
     file.open(QFile::ReadOnly);
     QDataStream fstream(&file);
@@ -170,7 +215,9 @@ void Recorder::loadAudioDataFromFile(const QString &fileName)
     {
         short i;
         fstream >> i;
+        i /= std::numeric_limits<short>::max(); // Scale to [-1,1] range.
         complexData.push_back(std::complex<double>((double)i, 0.0));
     }
     file.close();
+    emit recordingStopped(complexData);
 }

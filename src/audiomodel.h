@@ -6,7 +6,10 @@
 #include <complex>
 
 using namespace std;
-
+/**
+ * @brief Klasa odpowiadająca za obliczanie wyników z pobranych próbek. W trakcie obliczeń korzysta z szybkiej transformaty Fourier'a oraz Twierdzenia Parsevala.
+ * @authors Adrianna Łuczak Magdalena Buczyńska Pavel Mukha Adrian Borucki
+ */
 class AudioModel : public QObject
 {
     Q_OBJECT
