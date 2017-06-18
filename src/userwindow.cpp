@@ -12,20 +12,22 @@ UserWindow::UserWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::UserWindow)
 {    
+    //tworzymy okno UserWindow
     ui->setupUi(this);
     QDesktopWidget *desktop = QApplication::desktop();
+    //w kwadracie
     QRect rect = desktop->screenGeometry(1);
     move(rect.topLeft());
-    this->showMaximized();
-
+    this->showMaximized(); //fullscreen
+    //na środku UserList
     setCentralWidget(ui->UserList);
-    ui->UserList->setColumnCount(5);
+    ui->UserList->setColumnCount(5); //liczba kolumn
     ui->UserList->setColumnHidden(3, true); // Hide ID column.
     ui->UserList->setColumnHidden(4, true); // Hide gender column.
-    QStringList Header;
+    QStringList Header; //nagłówek
     Header << "Imię" << "Nazwisko" << "Wynik [dB]";
     ui->UserList->setHorizontalHeaderLabels(Header);
-    Showing = a;
+    Showing = a; // zmienna kontrolna wyswietlająca wszystkich niezależnie od płci
 }
 /**
  * @brief Destruktor. Niszczy okno dostępne dla publiczności.
@@ -35,7 +37,6 @@ UserWindow::~UserWindow()
 {
     delete ui;
 }
-
 /**
  * @brief Metoda określająca wielkości kolumn.
  * @param event Zdarzenie.
@@ -49,7 +50,6 @@ void UserWindow::resizeEvent(QResizeEvent *event)
 
     QMainWindow::resizeEvent(event);
 }
-
 /**
  * @brief Metoda dodająca użytkownika do rankingu.
  * @param user Uczestnik konkursu.
@@ -58,24 +58,26 @@ void UserWindow::resizeEvent(QResizeEvent *event)
  */
 void UserWindow::InsertUserToRanking(User *user, int ID)
 {
+    //dla każdego rzędu
      for(int i=0;i<ui->UserList->rowCount();i++)
      {
+         //edycja istniejącego użytkownika
          if (ui->UserList->item(i,3)->text() == QString::number(ID))
          {
-             ui->UserList->setItem(i,0,new QTableWidgetItem(user->getFirstName()));
-             ui->UserList->setItem(i,1,new QTableWidgetItem(user->getLastName()));
+             ui->UserList->setItem(i,0,new QTableWidgetItem(user->getFirstName())); //dodajemy imie
+             ui->UserList->setItem(i,1,new QTableWidgetItem(user->getLastName())); //dodajemy nazwisko
              auto item = new QTableWidgetItem();
-             item->setData(Qt::DisplayRole, QVariant(user->getShoutScore()));
+             item->setData(Qt::DisplayRole, QVariant(user->getShoutScore())); //dodajemy wynik
              ui->UserList->setItem(i,2,item);
              QString genderText = user->getPersonGender() == man ? "M" : "K";
-             ui->UserList->setItem(ui->UserList->rowCount()-1,4,new QTableWidgetItem(genderText));
-             ui->UserList->sortByColumn(2);
-			 if(Showing == w)
+             ui->UserList->setItem(ui->UserList->rowCount()-1,4,new QTableWidgetItem(genderText)); //dodajemy płeć
+             ui->UserList->sortByColumn(2); //sortujemy listę po wyniku
+             if(Showing == w) //wyświetlanie kobiet
 			 {
 				 ShowAll();
 				 HideMen();
 			 }
-			 else if(Showing == m)
+             else if(Showing == m) //wyświetlanie mężczyzn
 			 {
 				 ShowAll();
 				 HideWomen();
@@ -83,15 +85,16 @@ void UserWindow::InsertUserToRanking(User *user, int ID)
              return;
          }
      }
-     ui->UserList->setRowCount(ui->UserList->rowCount()+1);
-     ui->UserList->setItem(ui->UserList->rowCount()-1,0,new QTableWidgetItem(user->getFirstName()));
-     ui->UserList->setItem(ui->UserList->rowCount()-1,1,new QTableWidgetItem(user->getLastName()));
+     //dodawanie nowego użytkownika
+     ui->UserList->setRowCount(ui->UserList->rowCount()+1); //zwiększamy liczbę rzędów
+     ui->UserList->setItem(ui->UserList->rowCount()-1,0,new QTableWidgetItem(user->getFirstName())); //imie
+     ui->UserList->setItem(ui->UserList->rowCount()-1,1,new QTableWidgetItem(user->getLastName())); //nazwisko
      auto item = new QTableWidgetItem();
-     item->setData(Qt::DisplayRole, QVariant(user->getShoutScore()));
+     item->setData(Qt::DisplayRole, QVariant(user->getShoutScore())); // wynik
      ui->UserList->setItem(ui->UserList->rowCount()-1,2,item);
-     ui->UserList->setItem(ui->UserList->rowCount()-1,3,new QTableWidgetItem(QString::number(ID)));
+     ui->UserList->setItem(ui->UserList->rowCount()-1,3,new QTableWidgetItem(QString::number(ID))); //ukryte ID
      QString genderText = user->getPersonGender() == man ? "M" : "K";
-     ui->UserList->setItem(ui->UserList->rowCount()-1,4,new QTableWidgetItem(genderText));
+     ui->UserList->setItem(ui->UserList->rowCount()-1,4,new QTableWidgetItem(genderText)); //płeć
      ui->UserList->sortByColumn(2);
      if(Showing == w)
      {
@@ -104,7 +107,6 @@ void UserWindow::InsertUserToRanking(User *user, int ID)
          HideWomen();
      }
 }
-
 /**
  * @brief Metoda czyszcząca zawartość rankingu.
  * @authors Marcin Anuszkiewicz Sebastian Zyśk Dariusz Jóźko Kamil Wasilewski
@@ -112,9 +114,8 @@ void UserWindow::InsertUserToRanking(User *user, int ID)
 void UserWindow::ClearRanking()
 {
     ui->UserList->clearContents();
-    ui->UserList->setRowCount(0);
+    ui->UserList->setRowCount(0); //zmniejszamy liczbę rzędów do 0
 }
-
 /**
  * @brief Metoda umożliwiająca kontrolę wyświetlania uczestników według płci przy pomocy zmiennej Showing.
  * @param Showing Zmienna kontrolna.
@@ -124,7 +125,6 @@ void UserWindow::SetShowing(showing Showing)
 {
     this->Showing=Showing;
 }
-
 /**
  * @brief Metoda ukrywająca wszystkich mężczyzn w rankingu.
  * @authors Sebastian Zyśk Dariusz Jóźko
@@ -139,7 +139,6 @@ void UserWindow::HideMen()
         }
     }
 }
-
 /**
  * @brief Metoda ukrywająca wszystkie kobiety w rankingu.
  * @authors Sebastian Zyśk Dariusz Jóźko

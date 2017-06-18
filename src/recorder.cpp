@@ -1,7 +1,6 @@
 #include "recorder.h"
 #include <QDir>
 #include <QAudioFormat>
-#include <QDataStream>
 #include <limits>
 
 using std::logic_error;
@@ -13,6 +12,7 @@ Recorder::Recorder()
 {
     audio = nullptr;
 	InitialiseRecorder();
+    //tworzymy timer
 	setupTimer();
 }
 /**
@@ -40,7 +40,8 @@ void Recorder::InitialiseRecorder(const QString &deviceName)
     if (deviceName.isEmpty())
 		device = QAudioDeviceInfo::defaultInputDevice();
 	else
-	{
+    {
+        //ustalamy które z urządzeń zostalo wybrane do nagrywania
 		for (auto inputDevice : QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
 		{
 			if (inputDevice.deviceName() == deviceName)
@@ -50,14 +51,16 @@ void Recorder::InitialiseRecorder(const QString &deviceName)
 			}
 		}
 	}
-
     setFormatSettings();
+    //sprawdzanie czy format urządzenia jest wspierany, jeśli nie używamy najlepszego dopasowania
 	if (!device.isFormatSupported(format))
 	{
 		qDebug() << "Format not supported, trying to use the nearest.";
 		format = device.nearestFormat(format);
 	}
+    //wyświetlamy ustawienia
 	printFormat();
+    //przypisujemy zmiennej audio urządzenie do nagrywania i format próbek
     audio = new QAudioInput(device, format);
 }
 /**
@@ -67,7 +70,9 @@ void Recorder::InitialiseRecorder(const QString &deviceName)
 void Recorder::setupTimer()
 {
 	timer.setSingleShot(true);
+    //ustawiamy interwał na 5s
 	timer.setInterval(5000);
+    //łączymy timer z sygnałem
 	connect(&timer, SIGNAL(timeout()), this, SLOT(Stop()));
 }
 /**
@@ -76,12 +81,12 @@ void Recorder::setupTimer()
  */
 void Recorder::setFormatSettings()
 {
-	format.setChannelCount(1);
-	format.setSampleRate(48000);
-	format.setCodec("audio/pcm");
-	format.setSampleSize(16);
-    format.setByteOrder(QAudioFormat::LittleEndian);
-	format.setSampleType(QAudioFormat::SignedInt);
+    format.setChannelCount(1); //1 kanał
+    format.setSampleRate(48000); //48kHz częstotliwości
+    format.setCodec("audio/pcm"); //kodek pcm
+    format.setSampleSize(16); //wielkość próbek
+    format.setByteOrder(QAudioFormat::LittleEndian); //kolejność bitów
+    format.setSampleType(QAudioFormat::SignedInt); //typ probek
 }
 /**
  * @brief Metoda rozpoczynająca proces pobierania dźwięków z urządzenia wejścia do bufora.
@@ -89,52 +94,13 @@ void Recorder::setFormatSettings()
  */
 void Recorder::Start()
 {
-    // to be deleted in final release:
-//	try
-//	{
-//		openFile("audiodata.wav");
-//	}
-//	catch (exception &)
-//	{
-//		throw;
-//		return;
-//	}
     buffer.buffer().clear(); // Flush data from underlying QByteArray internal buffer.
+    //otwieramy buffer i rozpoczynamy nagrywanie
     buffer.open(QIODevice::ReadWrite);
     audio->start(&buffer);
 
 	// Record 5 seconds.
     timer.start();
-}
-/**
- * @brief Metoda wczytująca ustawienia z pliku konfiguracyjnego.
- * @param fileName Nazwa pliku konfiguracyjnego.
- * @warning Jeżeli plik jest tylko do odczytu lub istnieje już katalog o takiej samej nazwie, wyświetlony zostanie błąd.
- * @authors Kamil Wasilewski
- */
-void Recorder::openFile(const QString &fileName)
-{
-	// Check whether some directory with the same name already exist.
-	QDir testDir(fileName);
-	if (testDir.exists())
-	{
-		QString msg = QString("Nie udało się utworzyć pliku. Istnieje już katalog o tej samej nazwie (%1).").arg(fileName);
-		throw logic_error(msg.toStdString());
-		return;
-	}
-
-	QDir dir;
-	QString path = dir.absoluteFilePath(fileName);
-	file.setFileName(path);
-	file.setAudioFormat(format);
-
-	if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-	{
-		QString msg = "Nie udało się otworzyć pliku. ";
-		msg.append(file.errorString());
-		throw logic_error(msg.toStdString());
-		return;
-	}
 }
 /**
  * @brief Metoda kończąca przechwytywanie danych do buforu.
@@ -143,19 +109,13 @@ void Recorder::openFile(const QString &fileName)
 void Recorder::Stop()
 {
     timer.stop(); // Stop a timer in case user aborts recording.
+    //kończymy nagrywanie i zamykamy buffer
     audio->stop();
-    buffer.close();
-
-    parseBufferContent(buffer.data());
+	buffer.close();
+    //parsujemy zawartość buforu
+	parseBufferContent(buffer.data());
+    //wysyłamy sygnał do metody recordingStopped
 	emit recordingStopped(complexData);
-}
-/**
- * @brief Metoda zamykająca plik konfiguracyjny.
- * @authors Kamil Wasilewski
- */
-void Recorder::closeFile()
-{
-    file.close();
 }
 /**
  * @brief Metoda wyświetlająca format pobieranych danych.
@@ -191,14 +151,8 @@ QStringList Recorder::GetAvailableDevices() const
  */
 void Recorder::parseBufferContent(const QByteArray &data)
 {
-	complexData.clear();
 	QDataStream stream(data);
-	while (!stream.atEnd())
-	{
-        short i;
-		stream >> i;
-		complexData.push_back(std::complex<double>((double)i, 0.0));
-    }
+	parse(stream);
 }
 /**
  * @brief Metoda wczytująca dane Audio z pliku.
@@ -207,17 +161,27 @@ void Recorder::parseBufferContent(const QByteArray &data)
  */
 void Recorder::LoadAudioDataFromFile(const QString &fileName)
 {
-    complexData.clear();
     QFile file(fileName);
     file.open(QFile::ReadOnly);
+	file.seek(44); // Skip WAV header.
     QDataStream fstream(&file);
-    while (!fstream.atEnd())
-    {
-        short i;
-        fstream >> i;
-        i /= std::numeric_limits<short>::max(); // Scale to [-1,1] range.
-        complexData.push_back(std::complex<double>((double)i, 0.0));
-    }
+	parse(fstream);
     file.close();
     emit recordingStopped(complexData);
+}
+/**
+ * @brief Metoda parsująca dane.
+ * @authors Kamil Wasilewski
+ */
+void Recorder::parse(QDataStream &stream)
+{
+	complexData.clear();
+    stream.setByteOrder(QDataStream::LittleEndian); //ustawaimy kolejność bitów
+	while (!stream.atEnd())
+	{
+		short i;
+		stream >> i;
+		double j = (double) i / (double) std::numeric_limits<short>::max(); // Scale to [-1,1] range.
+        complexData.push_back(std::complex<double>(j, 0.0)); //wszelkie zera wysyłamy na koniec danej struktury
+	}
 }

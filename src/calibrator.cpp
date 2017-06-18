@@ -5,7 +5,7 @@
  */
 double Calibrator::calibrationData = 0.0;
 /**
- *  @brief Kalibrator. Wywołuje pomiar z urządzenia wejścia.
+ *  @brief Konstruktor. Wywołuje pomiar z urządzenia wejścia.
  * @author Pavel Mukha Kamil Wasilewski
  */
 Calibrator::Calibrator(Recorder *recorder, QObject *parent) : QObject(parent)
@@ -18,6 +18,7 @@ Calibrator::Calibrator(Recorder *recorder, QObject *parent) : QObject(parent)
  */
 void Calibrator::Calibrate()
 {
+    //łączy się z recorderem i uruchamia nagrywanie
 	connect(recorder, SIGNAL(recordingStopped(const QVector<std::complex<double> > &)), this, SLOT(OnRecordingStopped(const QVector<std::complex<double> > &)));
     recorder->Start();
 }
@@ -29,6 +30,7 @@ void Calibrator::Calibrate()
 void Calibrator::CalibrateFromFile(const QString &fileName)
 {
     connect(recorder, SIGNAL(recordingStopped(const QVector<std::complex<double> > &)), this, SLOT(OnRecordingStopped(const QVector<std::complex<double> > &)));
+    //wczytuje Audio z pliku
     recorder->LoadAudioDataFromFile(fileName);
 }
 /**
@@ -39,10 +41,11 @@ void Calibrator::CalibrateFromFile(const QString &fileName)
  */
 void Calibrator::OnRecordingStopped(const QVector<std::complex<double> > &x)
 {
+    //odłączenie recordera
     disconnect(recorder, 0, this, 0);
-    calibrationData = AudioModel::computeLevel(x);
-    qDebug() << calibrationData;
-    calibrationData = 94.0 - calibrationData;
-    qDebug() << "Po odjęciu od 94: " << calibrationData;
+    //obliczamy dane kalibracyjne
+    calibrationData = 94.0 - AudioModel::computeLevel(x);
+	qDebug() << "Wartość kalibracji: " << calibrationData;
+    //konczymy kalibrację
 	emit calibrationStopped();
 }

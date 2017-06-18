@@ -25,10 +25,11 @@ AddUserWindow::AddUserWindow(QWidget *parent,QString FirstName, QString SurName,
     QDialog(parent),
     ui(new Ui::AddUserWindow)
 {
+    //tworzymy nowe okno
     ui->setupUi(this);
     setWindowTitle(tr("Edytuj użytkownika"));
     setFixedSize(size());
-
+    //dodajemy wartości : imie, nazwisko, płeć
     ui->FirstNameEdit->setText(FirstName);
     ui->SurNameEdit->setText(SurName);
     if (g == man)
@@ -43,8 +44,10 @@ AddUserWindow::AddUserWindow(QWidget *parent,QString FirstName, QString SurName,
  */
 void AddUserWindow::accept()
 {
+    //jeżeli imie jest puste = błąd
     if (!(ui->FirstNameEdit->text().isEmpty()))
     {
+        //w przeciwnym razie dodajemy imie do mainWindow
          name = ui->FirstNameEdit->text();
          if (!(ui->SurNameEdit->text().isEmpty()))
          {
@@ -62,9 +65,7 @@ void AddUserWindow::accept()
          QMessageBox::critical(this, windowTitle(), tr("Pole imię jest puste"));
     }
 }
-/**
- * @brief Destruktor okna dodawania/edycji uczestników konkursu.
- */
+
 AddUserWindow::~AddUserWindow()
 {
     delete ui;
